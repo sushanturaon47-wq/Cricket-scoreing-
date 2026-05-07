@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>URAON CRICKET </title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#0d1117;
+color:white;
+display:flex;
+justify-content:center;
+}
+
+.container{
+width:100%;
+max-width:420px;
+}
+
+/* HEADER */
+
+header{
+padding:15px;
+text-align:center;
+background:#000;
+color:#00ffcc;
+font-size:22px;
+font-weight:bold;
+}
+
+/* SCREEN */
+
+.screen{
+display:none;
+padding:110px 12px 20px;
+min-height:100vh;
+box-sizing:border-box;
+}
+
+.active{
+display:block;
+}
+
+/* CARD */
+
+.card{
+background:#161b22;
+padding:14px;
+border-radius:12px;
+margin-bottom:10px;
+}
+
+/* INPUT */
+
+input,select,button{
+width:100%;
+padding:14px;
+font-size:18px;
+border:none;
+border-radius:10px;
+margin-top:6px;
+box-sizing:border-box;
+}
+
+/* BUTTON */
+
+button{
+font-weight:bold;
+cursor:pointer;
+}
+
+.add{
+background:#00c853;
+color:black;
+}
+
+.open{
+background:#2962ff;
+color:white;
+}
+
+.back{
+background:#555;
+color:white;
+}
+
+.shareBtn{
+background:#ff9800;
+color:black;
+}
+
+/* OVERLAY */
+
+.overlay{
+position:fixed;
+top:10px;
+left:50%;
+transform:translateX(-50%);
+width:calc(100% - 20px);
+max-width:420px;
+background:linear-gradient(90deg,#ff512f,#dd2476);
+padding:12px;
+border-radius:12px;
+z-index:1000;
+box-sizing:border-box;
+}
+
+/* TEXT */
+
+#scoreText{
+font-size:22px;
+font-weight:bold;
+}
+
+#overText{
+font-size:15px;
+margin-top:2px;
+}
+
+#targetText{
+font-size:15px;
+margin-top:2px;
+color:#ffe082;
+font-weight:bold;
+}
+
+#batsmanText{
+font-size:16px;
+margin-top:5px;
+line-height:1.5;
+}
+
+#bowlerText{
+font-size:14px;
+margin-top:4px;
+}
+
+/* GRID */
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr 1fr;
+gap:8px;
+}
+
+.grid button{
+background:#e0e0e0;
+color:black;
+}
+
+.wicketBtn{
+background:#ff1744 !important;
+color:white !important;
+grid-column:span 3;
+}
+
+.undoBtn{
+background:#ff9800 !important;
+color:black !important;
+grid-column:span 3;
+}
+
+/* SECOND INNING */
+
+#secondInningBtn{
+display:none;
+background:#00c853;
+color:black;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>🏏 URAON CRICKET</header>
+
+<!-- TEAM -->
+
+<div id="teamScreen" class="screen active">
+
+<div class="card">
+<input id="teamName" placeholder="Team name">
+<button class="add" onclick="addTeam()">
+Add Team
+</button>
+</div>
+
+<div id="teamList"></div>
+
+</div>
+
+<!-- PLAYER -->
+
+<div id="playerScreen" class="screen">
+
+<div class="card">
+
+<button class="back" onclick="back()">
+Back
+</button>
+
+<h3 id="teamTitle"></h3>
+
+</div>
+
+<div class="card">
+
+<input id="playerName" placeholder="Player name">
+
+<button class="add" onclick="addPlayer()">
+Add Player
+</button>
+
+</div>
+
+<div id="playerList"></div>
+
+<button class="open" onclick="openMatch()">
+Next
+</button>
+
+</div>
+
+<!-- MATCH -->
+
+<div id="matchScreen" class="screen">
+
+<div class="card">
+
+<button class="back" onclick="backToPlayer()">
+Back
+</button>
+
+</div>
+
+<div class="card">
+
+Team A
+
+<select id="teamA"></select>
+
+Team B
+
+<select id="teamB"></select>
+
+Overs
+
+<input type="number" id="overs">
+
+<button class="open" onclick="startMatch()">
+Start Match
+</button>
+
+</div>
+
+</div>
+
+<!-- LIVE -->
+
+<div id="liveScreen" class="screen">
+
+<div class="overlay">
+
+<div id="scoreText">0/0</div>
+
+<div id="overText">0.0</div>
+
+<div id="targetText"></div>
+
+<div id="batsmanText"></div>
+
+<div id="bowlerText"></div>
+
+</div>
+
+<div class="card">
+
+Striker
+
+<select id="striker"></select>
+
+Non-Striker
+
+<select id="nonStriker"></select>
+
+Bowler
+
+<select id="bowler"></select>
+
+</div>
+
+<div class="card grid">
+
+<button onclick="addRun(1)">1</button>
+<button onclick="addRun(2)">2</button>
+<button onclick="addRun(3)">3</button>
+
+<button onclick="addRun(4)">4</button>
+<button onclick="addRun(6)">6</button>
+<button onclick="dot()">Dot</button>
+
+<button class="wicketBtn" onclick="wicket()">
+WICKET
+</button>
+
+<button class="undoBtn" onclick="undoAction()">
+↩️ UNDO
+</button>
+
+</div>
+
+<button class="shareBtn" onclick="shareOverlay()">
+📤 Share Overlay
+</button>
+
+<button id="secondInningBtn"
+onclick="startSecondInnings()">
+Start 2nd Innings
+</button>
+
+</div>
+
+</div>
+
+<script type="module">
+
+/* FIREBASE */
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getDatabase,
+ref,
+set
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyBsex19l6ZXF7YKySu7hgczLSAP1jCQFts",
+  authDomain: "project-08fe153e-3d7a-4d5e-b63.firebaseapp.com",
+  projectId: "project-08fe153e-3d7a-4d5e-b63",
+  storageBucket: "project-08fe153e-3d7a-4d5e-b63.firebasestorage.app",
+  messagingSenderId: "353105396892",
+  appId: "1:353105396892:web:922f11a87e8219d4f1d959",
+  measurementId: "G-TSPDXCEVY2"
+
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getDatabase(app);
+
+let matchId = "match1";
+
+/* TEAMS */
+
+let teams =
+JSON.parse(
+localStorage.getItem("teams")
+)||[];
+
+let selected=null;
+
+/* MATCH */
+
+let battingTeam="",bowlingTeam="";
+let battingPlayers=[],bowlingPlayers=[];
+
+let runs=0,wickets=0,balls=0,maxOvers=0;
+
+let inningEnded=false;
+
+let innings=1;
+
+let target=0;
+
+let playerStats={},bowlerStats={};
+
+let strikerName="",nonStrikerName="";
+
+/* UNDO */
+
+let historyStack=[];
+
+/* SAVE LIVE */
+
+function saveLiveMatch(){
+
+set(
+ref(db,'matches/'+matchId),
+{
+
+battingTeam,
+bowlingTeam,
+
+runs,
+wickets,
+balls,
+
+innings,
+target,
+maxOvers,
+
+strikerName,
+nonStrikerName,
+
+playerStats,
+bowlerStats,
+
+bowler:bowler.value
+
+}
+
+);
+
+}
+
+/* SHARE */
+
+window.shareOverlay=function(){
+
+let url =
+location.origin +
+"/overlay.html?match=" +
+matchId;
+
+navigator.clipboard.writeText(url);
+
+alert("Overlay Link Copied");
+
+};
+
+/* SAVE STATE */
+
+function saveState(){
+
+historyStack.push({
+
+runs,
+wickets,
+balls,
+inningEnded,
+innings,
+target,
+
+strikerName,
+nonStrikerName,
+
+playerStats:
+JSON.parse(JSON.stringify(playerStats)),
+
+bowlerStats:
+JSON.parse(JSON.stringify(bowlerStats))
+
+});
+
+}
+
+/* UNDO */
+
+window.undoAction=function(){
+
+if(historyStack.length===0)return;
+
+let last=historyStack.pop();
+
+runs=last.runs;
+wickets=last.wickets;
+balls=last.balls;
+
+inningEnded=last.inningEnded;
+
+innings=last.innings;
+
+target=last.target;
+
+strikerName=last.strikerName;
+
+nonStrikerName=last.nonStrikerName;
+
+playerStats=last.playerStats;
+
+bowlerStats=last.bowlerStats;
+
+update();
+
+};
+
+/* TEAM */
+
+window.addTeam=function(){
+
+let n=teamName.value.trim();
+
+if(!n)return;
+
+teams.push({
+name:n,
+players:[]
+});
+
+save();
+
+};
+
+window.openTeam=function(i){
+
+selected=i;
+
+teamScreen.classList.remove("active");
+
+playerScreen.classList.add("active");
+
+render();
+
+};
+
+window.back=function(){
+
+playerScreen.classList.remove("active");
+
+teamScreen.classList.add("active");
+
+};
+
+window.addPlayer=function(){
+
+let n=playerName.value.trim();
+
+if(!n)return;
+
+teams[selected].players.push(n);
+
+save();
+
+};
+
+function save(){
+
+localStorage.setItem(
+"teams",
+JSON.stringify(teams)
+);
+
+teamName.value="";
+
+playerName.value="";
+
+render();
+
+}
+
+/* MATCH */
+
+window.openMatch=function(){
+
+playerScreen.classList.remove("active");
+
+matchScreen.classList.add("active");
+
+let opt="";
+
+teams.forEach(t=>{
+
+opt+=`<option>${t.name}</option>`;
+
+});
+
+teamA.innerHTML=opt;
+
+teamB.innerHTML=opt;
+
+};
+
+window.backToPlayer=function(){
+
+matchScreen.classList.remove("active");
+
+playerScreen.classList.add("active");
+
+};
+
+/* START MATCH */
+
+window.startMatch=function(){
+
+historyStack=[];
+
+innings=1;
+
+target=0;
+
+runs=0;
+wickets=0;
+balls=0;
+
+inningEnded=false;
+
+maxOvers=parseInt(overs.value)||0;
+
+battingTeam=teamA.value;
+
+bowlingTeam=teamB.value;
+
+battingPlayers=
+teams.find(
+t=>t.name===battingTeam
+).players;
+
+bowlingPlayers=
+teams.find(
+t=>t.name===bowlingTeam
+).players;
+
+playerStats={};
+
+bowlerStats={};
+
+battingPlayers.forEach(p=>{
+
+playerStats[p]={
+runs:0,
+balls:0
+};
+
+});
+
+bowlingPlayers.forEach(p=>{
+
+bowlerStats[p]={
+runs:0
+};
+
+});
+
+striker.innerHTML=
+battingPlayers.map(
+p=>`<option>${p}</option>`
+).join("");
+
+nonStriker.innerHTML=
+striker.innerHTML;
+
+bowler.innerHTML=
+bowlingPlayers.map(
+p=>`<option>${p}</option>`
+).join("");
+
+strikerName=battingPlayers[0];
+
+nonStrikerName=battingPlayers[1];
+
+striker.value=strikerName;
+
+nonStriker.value=nonStrikerName;
+
+matchScreen.classList.remove("active");
+
+liveScreen.classList.add("active");
+
+secondInningBtn.style.display="none";
+
+update();
+
+};
+
+/* SWAP */
+
+function swapStrike(){
+
+let temp=strikerName;
+
+strikerName=nonStrikerName;
+
+nonStrikerName=temp;
+
+}
+
+/* RUN */
+
+window.addRun=function(r){
+
+if(inningEnded)return;
+
+saveState();
+
+runs+=r;
+
+balls++;
+
+playerStats[strikerName].runs+=r;
+
+playerStats[strikerName].balls++;
+
+bowlerStats[bowler.value].runs+=r;
+
+if(r%2===1){
+swapStrike();
+}
+
+if(balls%6===0){
+swapStrike();
+}
+
+update();
+
+};
+
+/* DOT */
+
+window.dot=function(){
+
+if(inningEnded)return;
+
+saveState();
+
+balls++;
+
+playerStats[strikerName].balls++;
+
+if(balls%6===0){
+swapStrike();
+}
+
+update();
+
+};
+
+/* WICKET */
+
+window.wicket=function(){
+
+if(inningEnded)return;
+
+saveState();
+
+wickets++;
+
+balls++;
+
+playerStats[strikerName].balls++;
+
+if(balls%6===0){
+swapStrike();
+}
+
+alert("New batsman select karo");
+
+update();
+
+};
+
+/* UPDATE */
+
+function update(){
+
+let over=Math.floor(balls/6);
+
+scoreText.innerText=
+battingTeam+" - "+runs+"/"+wickets;
+
+overText.innerText=
+over+"."+(balls%6)+" / "+maxOvers+" ov";
+
+targetText.innerText=
+innings===2
+? "Target : "+target
+: "";
+
+let p1=battingPlayers[0];
+
+let p2=battingPlayers[1];
+
+batsmanText.innerText=
+`${p1} (${playerStats[p1]?.runs || 0}) ${p1===strikerName?"*":""}
+,
+${p2} (${playerStats[p2]?.runs || 0}) ${p2===strikerName?"*":""}`;
+
+bowlerText.innerText=
+`${bowler.value} - ${bowlerStats[bowler.value]?.runs || 0} run`;
+
+/* 1ST */
+
+if(
+innings===1 &&
+!inningEnded &&
+maxOvers>0 &&
+over>=maxOvers
+){
+
+inningEnded=true;
+
+target=runs+1;
+
+alert("🏁 1st Innings End");
+
+secondInningBtn.style.display="block";
+
+}
+
+/* 2ND */
+
+if(innings===2){
+
+if(runs>=target){
+
+inningEnded=true;
+
+alert("🎉 "+battingTeam+" Won");
+
+}
+
+else if(
+!inningEnded &&
+maxOvers>0 &&
+over>=maxOvers
+){
+
+inningEnded=true;
+
+alert("🏆 "+bowlingTeam+" Won");
+
+}
+
+}
+
+saveLiveMatch();
+
+}
+
+/* SECOND INNING */
+
+window.startSecondInnings=function(){
+
+historyStack=[];
+
+innings=2;
+
+inningEnded=false;
+
+secondInningBtn.style.display="none";
+
+runs=0;
+wickets=0;
+balls=0;
+
+let temp=battingTeam;
+
+battingTeam=bowlingTeam;
+
+bowlingTeam=temp;
+
+battingPlayers=
+teams.find(
+t=>t.name===battingTeam
+).players;
+
+bowlingPlayers=
+teams.find(
+t=>t.name===bowlingTeam
+).players;
+
+playerStats={};
+
+bowlerStats={};
+
+battingPlayers.forEach(p=>{
+
+playerStats[p]={
+runs:0,
+balls:0
+};
+
+});
+
+bowlingPlayers.forEach(p=>{
+
+bowlerStats[p]={
+runs:0
+};
+
+});
+
+striker.innerHTML=
+battingPlayers.map(
+p=>`<option>${p}</option>`
+).join("");
+
+nonStriker.innerHTML=
+striker.innerHTML;
+
+bowler.innerHTML=
+bowlingPlayers.map(
+p=>`<option>${p}</option>`
+).join("");
+
+strikerName=battingPlayers[0];
+
+nonStrikerName=battingPlayers[1];
+
+striker.value=strikerName;
+
+nonStriker.value=nonStrikerName;
+
+update();
+
+};
+
+/* RENDER */
+
+function render(){
+
+let html="";
+
+teams.forEach((t,i)=>{
+
+html+=`
+
+<div class="card">
+
+${t.name}
+
+<button onclick="openTeam(${i})">
+Open
+</button>
+
+</div>
+
+`;
+
+});
+
+teamList.innerHTML=html;
+
+if(selected!=null){
+
+teamTitle.innerText=
+teams[selected].name;
+
+let p="";
+
+teams[selected].players.forEach(pl=>{
+
+p+=`
+
+<div class="card">
+${pl}
+</div>
+
+`;
+
+});
+
+playerList.innerHTML=p;
+
+}
+
+}
+
+render();
+
+</script>
+
+</body>
+</html>
